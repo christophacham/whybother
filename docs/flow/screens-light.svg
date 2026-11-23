@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 712 362" width="712" height="362" role="img">
+<style>svg{--foreground:#1f2328;--muted-foreground:#59636e;--card:#f6f8fa;--border:#d1d9e0;--primary:#0969da;--success:#1a7f37;--warning:#bc4c00;--destructive:#cf222e}
+
+svg{--edge:color-mix(in srgb,var(--foreground) 38%,transparent);--mf:var(--muted-foreground,color-mix(in srgb,var(--foreground) 60%,transparent))}
+.box{fill:var(--card);stroke:var(--border);stroke-width:1.25}
+.proto .box{stroke-dasharray:4 3;stroke:color-mix(in srgb,var(--foreground) 32%,transparent)}
+
+.t{fill:var(--foreground);font:600 13px -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif;text-anchor:middle}
+.s{fill:var(--mf);font:11px -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif;text-anchor:middle}
+.tag{font:600 9.5px ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;text-anchor:middle;letter-spacing:.04em}
+.e{fill:none;stroke:var(--edge);stroke-width:1.5;stroke-dasharray:5 5;animation:march 1s linear infinite}
+.e.del{stroke:color-mix(in srgb,var(--destructive) 70%,transparent)}
+.e.soft{stroke-dasharray:2 4;animation-duration:1.6s}
+.lb{fill:var(--mf);font:11px -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif}
+.lb.m{text-anchor:middle}
+.lb.e2{text-anchor:end}
+.ah{fill:var(--edge)}
+.ah.del{fill:color-mix(in srgb,var(--destructive) 70%,transparent)}
+.fix .box{stroke:var(--success);stroke-width:1.75;fill:color-mix(in srgb,var(--success) 9%,var(--card))}
+.park .box{stroke:var(--warning);stroke-width:1.75;fill:color-mix(in srgb,var(--warning) 9%,var(--card))}
+.good .box{stroke:var(--mf);stroke-width:1.75}
+.dia{fill:color-mix(in srgb,var(--primary) 12%,var(--card));stroke:var(--primary);stroke-width:1.5}
+.hub .box{stroke:var(--primary);stroke-width:1.75}
+.ring{fill:none;stroke:var(--primary);stroke-width:2;opacity:0;transform-box:fill-box;transform-origin:center;animation:ring 2.6s ease-out infinite 1.2s}
+.tok{filter:drop-shadow(0 0 4px currentColor)}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes march{to{stroke-dashoffset:-10}}
+@keyframes ring{0%{opacity:.7;transform:scale(1)}100%{opacity:0;transform:scale(1.18)}}
+
+@media (prefers-reduced-motion:reduce){.e,.ring{animation:none}.tok{display:none}}
+</style>
+<defs><marker id="sa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"></path></marker><marker id="sad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah del"></path></marker></defs><path d="M204,52 H506" class="e " marker-end="url(#sa)"></path><text x="356" y="45" class="lb m">Overview tab</text><path d="M508,72 H206" class="e " marker-end="url(#sa)"></path><text x="356" y="86" class="lb m">Inbox tab</text><path d="M114,90 V262 H158" class="e " marker-end="url(#sa)"></path><text x="122" y="180" class="lb ">Judge →</text><path d="M190,232 V92" class="e soft" marker-end="url(#sa)"></path><text x="196" y="180" class="lb ">← Back</text><path d="M262,232 V140 H520 V92" class="e " marker-end="url(#sa)"></path><text x="391" y="133" class="lb m">Save (any outcome)</text><path d="M560,90 V182 H320 V230" class="e " marker-end="url(#sa)"></path><text x="440" y="175" class="lb m">Judge again (due · steps done)</text><path d="M610,90 V228" class="e " marker-end="url(#sa)"></path><text x="616" y="190" class="lb ">click title</text><path d="M632,252 H668 V92" class="e soft" marker-end="url(#sa)"></path><text x="674" y="180" class="lb ">← Back</text><path d="M452,268 H342" class="e " marker-end="url(#sa)"></path><text x="397" y="261" class="lb m">Judge again</text><g class="n "><rect x="24" y="30" width="180" height="60" rx="10" class="box"></rect><text x="114" y="57" class="t">Inbox</text><text x="114" y="73" class="s">capture + list</text><g><rect x="142.6" y="22" width="55.4" height="16" rx="8" fill="color-mix(in srgb,var(--success) 18%,var(--card))" stroke="var(--success)" stroke-width="1"></rect><text x="170.3" y="33.5" class="tag" fill="var(--success)">PARTIAL</text></g></g><g class="n proto"><rect x="508" y="30" width="180" height="60" rx="10" class="box"></rect><text x="598" y="57" class="t">Overview</text><text x="598" y="73" class="s">counts · steps · triggers</text></g><g class="n proto hub"><rect x="160" y="232" width="180" height="60" rx="10" class="box"></rect><text x="250" y="259" class="t">Judge</text><text x="250" y="275" class="s">verdict + follow-up form</text></g><g class="n proto"><rect x="452" y="230" width="180" height="60" rx="10" class="box"></rect><text x="542" y="257" class="t">Detail</text><text x="542" y="273" class="s">the full case file</text></g><circle r="5" fill="var(--primary)" class="tok" style="color:var(--primary)" opacity="0"><animateMotion dur="8s" begin="0.8s" repeatCount="indefinite" path="M114,60 V262 H262 V140 H520 V60 H610 V260 H250" rotate="auto" keyPoints="0;1" keyTimes="0;1" calcMode="linear"></animateMotion><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.04;.94;1" dur="8s" begin="0.8s" repeatCount="indefinite"></animate></circle><g transform="translate(24 348)"><rect x="0" y="-10" width="22" height="12" rx="4" class="box" style=""></rect><text x="30" y="0" class="lb" style="font-size:12px">in the app today</text><rect x="136.96173095703125" y="-10" width="22" height="12" rx="4" class="box" style="stroke-dasharray:4 3;stroke:color-mix(in srgb,var(--foreground) 32%,transparent)"></rect><text x="166.96173095703125" y="0" class="lb" style="font-size:12px">prototype only, not built yet</text><line x1="330.47413635253906" y1="-4" x2="356.47413635253906" y2="-4" style="stroke:var(--edge);stroke-width:1.5;stroke-dasharray:2 4"></line><text x="364.47413635253906" y="0" class="lb" style="font-size:12px">back / discards the draft</text></g>
+</svg>

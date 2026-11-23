@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Problem-first planner</title><style>*{box-sizing:border-box}
+:root{--mf:var(--muted-foreground,color-mix(in srgb,var(--foreground) 60%,transparent))}
+body{margin:0;font-size:14px;line-height:1.45}
+h2{font-size:20px;line-height:1.25;margin:0;font-weight:650;letter-spacing:-.01em}
+h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mf);font-weight:600;margin:24px 0 8px;display:flex;align-items:center;gap:8px}
+p{margin:0}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:18px;font-size:12px;color:var(--mf)}
+.flow .s{display:flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;border:1px solid var(--border)}
+.flow .s.on{background:var(--primary);color:var(--primary-foreground);border-color:transparent;font-weight:600}
+.flow .s.done{color:var(--foreground)}
+.flow .n{font-family:var(--font-mono);opacity:.75}
+.flow .a{opacity:.45}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.muted{color:var(--mf)}
+.small{font-size:12px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:2px 9px;border-radius:999px;border:1px solid var(--border);color:var(--mf);white-space:nowrap}
+.btn{font:inherit;font-size:13px;font-weight:550;padding:8px 14px;border-radius:calc(var(--radius) - 2px);border:1px solid var(--border);background:transparent;color:var(--foreground);cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--secondary)}
+.btn.primary{background:var(--primary);color:var(--primary-foreground);border-color:transparent}
+.btn.primary:hover{filter:brightness(1.08);background:var(--primary)}
+.btn:focus-visible,input:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.count{font-family:var(--font-mono);font-size:11px;padding:0 6px;border-radius:999px;background:var(--secondary);color:var(--foreground);letter-spacing:0}
+[hidden]{display:none!important}
+.nav{display:flex;align-items:center;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.tab{font:inherit;font-size:13px;font-weight:550;padding:6px 13px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--mf);cursor:pointer;display:flex;gap:7px;align-items:center}
+.tab:hover{color:var(--foreground)}
+.tab.on{background:var(--primary);color:var(--primary-foreground);border-color:transparent}
+.tab.on .count{background:color-mix(in srgb,var(--primary-foreground) 22%,transparent);color:inherit}
+.sp{flex:1}
+.link{font:inherit;font-size:12px;background:none;border:0;color:var(--mf);cursor:pointer;padding:4px 2px;text-decoration:underline;text-underline-offset:3px}
+.link:hover{color:var(--foreground)}
+.back{display:inline-block;margin-bottom:12px;text-decoration:none;font-size:13px}
+.tab:focus-visible,.link:focus-visible,.tlink:focus-visible,textarea:focus-visible,.pick button:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.q{display:block;font-size:17px;font-weight:650;margin-bottom:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row.end{justify-content:flex-end;margin-top:14px}
+.txt{flex:1 1 220px;min-width:0;font:inherit;padding:9px 12px;border-radius:calc(var(--radius) - 2px);border:1px solid var(--border);background:var(--background);color:var(--foreground)}
+#in{font-size:15px;padding:10px 12px}
+.nudge{margin-top:12px;padding:12px 14px;border-radius:calc(var(--radius) - 2px);background:color-mix(in srgb,var(--warning) 12%,transparent);border:1px solid color-mix(in srgb,var(--warning) 40%,transparent)}
+.nudge-h{font-weight:600}
+.pick{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pick button{font:inherit;font-size:13px;padding:5px 11px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--foreground);cursor:pointer}
+.pick button:hover{border-color:var(--ring)}
+.pick button.ghost{background:transparent;color:var(--mf)}
+.pick button.on{background:var(--primary);color:var(--primary-foreground);border-color:transparent}
+.ok{margin-top:12px;font-size:13px;color:var(--success)}
+.stack{display:flex;flex-direction:column;gap:10px}
+.item{display:flex;align-items:center;gap:12px;padding:12px 14px;flex-wrap:wrap}
+.grow{flex:1 1 220px;min-width:0}
+.t{font-weight:550}
+.tlink{font:inherit;font-weight:650;font-size:15px;background:none;border:0;padding:0;color:var(--foreground);cursor:pointer;text-align:left}
+.tlink:hover{text-decoration:underline;text-underline-offset:3px}
+.tlink.sm{font-size:14px;font-weight:550}
+.empty{padding:18px;text-align:center;color:var(--mf);border:1px dashed var(--border);border-radius:var(--radius);font-size:13px}
+.foot{margin-top:16px;font-size:12px;color:var(--mf)}
+.head{margin-bottom:14px}
+.head .lbl{font-size:12px;color:var(--mf);margin-bottom:4px}
+.head .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chip.st{color:var(--c);border-color:color-mix(in srgb,var(--c) 50%,transparent);font-weight:600}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.k{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mf);font-weight:600;margin-bottom:6px}
+textarea{width:100%;font:inherit;resize:vertical;min-height:70px;padding:8px 10px;border-radius:calc(var(--radius) - 2px);border:1px solid var(--border);background:var(--background);color:var(--foreground)}
+input[type=range]{width:100%;accent-color:var(--primary);margin:10px 0 2px}
+.ends{display:flex;justify-content:space-between;font-size:12px;color:var(--mf)}
+.gq{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.gq b{font-weight:600}
+.read{font-family:var(--font-mono);font-size:13px}
+.qrow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--border)}
+.qrow:first-child{border-top:0;padding-top:0}
+.qrow:last-child{padding-bottom:0}
+.ql{font-weight:550}
+.seg{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mf)}
+.seg .bs{display:flex;gap:3px}
+.seg button{width:30px;height:28px;font:inherit;font-family:var(--font-mono);font-size:12px;border:1px solid var(--border);background:transparent;color:var(--mf);border-radius:6px;cursor:pointer}
+.seg button:hover{border-color:var(--ring)}
+.seg button.on{background:var(--primary);color:var(--primary-foreground);border-color:transparent}
+.seg button:focus-visible{outline:2px solid var(--ring);outline-offset:1px}
+.seg .e{min-width:52px}
+.seg .e:first-child{text-align:right}
+.verdict{--v:var(--mf);background:color-mix(in srgb,var(--v) 11%,var(--card));border:1px solid color-mix(in srgb,var(--v) 45%,transparent);border-radius:var(--radius);padding:16px;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.verdict.pending{border-style:dashed;background:transparent}
+.vq{font-size:12px;color:var(--mf)}
+.va{font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--v);line-height:1.15}
+.verdict.pending .va{font-size:16px;color:var(--mf);font-weight:600}
+.vr{margin-top:4px;max-width:380px}
+.acts{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.verdict .btn.primary{background:var(--v);color:var(--background)}
+.follow .fh{font-size:16px;font-weight:650;margin-bottom:4px}
+.follow .over{font-size:12px;color:var(--warning);margin-bottom:6px}
+.fl{display:block;font-size:13px;font-weight:550;margin:14px 0 6px}
+.fl .txt{display:block;width:100%;margin-top:6px;font-weight:400}
+.inl span{white-space:nowrap;color:var(--mf)}
+.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.steps.sep{margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.steps label,.steps .ed{display:flex;gap:8px;align-items:center}
+.steps label{cursor:pointer}
+.steps input[type=checkbox]{accent-color:var(--success);width:15px;height:15px;margin:0;flex:none}
+.steps input:checked+span{color:var(--mf);text-decoration:line-through}
+.steps .next{font-size:11px;font-family:var(--font-mono);color:var(--success);margin-left:auto}
+.steps .ed{padding:6px 10px;border:1px solid var(--border);border-radius:calc(var(--radius) - 2px)}
+.steps .ed span{flex:1}
+.x{font:inherit;background:none;border:0;color:var(--mf);cursor:pointer;padding:0 4px;font-size:16px;line-height:1}
+.x:hover{color:var(--destructive)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{padding:12px 14px}
+.stat .num{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.stat .lab{font-size:12px;color:var(--mf)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.why{color:var(--mf);font-size:13px;margin-top:2px}
+.bar{position:relative;height:8px;border-radius:999px;background:var(--secondary);margin:14px 0 6px;overflow:hidden}
+.bar .plan{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--success) 45%,transparent) 0 4px,transparent 4px 8px)}
+.bar .now{position:absolute;inset:0 auto 0 0;background:var(--success);border-radius:999px;transition:width .25s}
+.bar.plain .now{background:var(--mf)}
+.barl{display:flex;justify-content:space-between;font-size:12px;color:var(--mf);gap:8px;flex-wrap:wrap}
+.barl b{color:var(--foreground);font-weight:600}
+.banner{margin-top:12px;padding:10px 12px;border-radius:calc(var(--radius) - 2px);display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:color-mix(in srgb,var(--c,var(--success)) 12%,transparent);border:1px solid color-mix(in srgb,var(--c,var(--success)) 40%,transparent)}
+.due{border-color:color-mix(in srgb,var(--warning) 55%,transparent);background:color-mix(in srgb,var(--warning) 9%,var(--card))}
+.trig{border-color:color-mix(in srgb,var(--warning) 45%,transparent);color:var(--foreground);white-space:normal}
+.closed .tlink{color:var(--mf);font-weight:500}
+.ans{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.ans .al{font-size:12px;color:var(--mf)}
+.ans .av{font-family:var(--font-mono);font-size:13px}
+.pips{display:inline-flex;gap:3px;margin-right:6px;vertical-align:middle}
+.pips i{width:10px;height:6px;border-radius:2px;background:color-mix(in srgb,var(--foreground) 16%,transparent)}
+.pips i.f{background:var(--foreground)}
+.vline{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+.flash{animation:fl 1.6s ease-out}
+@keyframes fl{0%{box-shadow:0 0 0 2px var(--ring)}100%{box-shadow:0 0 0 2px transparent}}
+@media (prefers-reduced-motion:reduce){.flash{animation:none}.bar .now{transition:none}}
+</style></head><body><div id="app"></div><script>const QS=[
+ {id:'pain',l:'How much does it hurt today?',s:'Hurts today',a:'barely',b:'daily'},
+ {id:'risk',l:'How bad is it if I do nothing?',s:'If I do nothing',a:'harmless',b:'disaster'},
+ {id:'gain',l:'How much better would fixed be?',s:'Improvement',a:'slightly',b:'hugely'},
+ {id:'cost',l:'How much effort is the fix?',s:'Effort',a:'an hour',b:'months'}];
+const EFF=['an hour','an evening','a weekend','a few weeks','months'];
+const LAB={fix:'Fix now',parked:'Parked',closed:'Good enough',inbox:'Waiting for a verdict'};
+const VTXT={fix:'Yes',parked:'Not now',closed:'No, good enough'};
+const COL={fix:'var(--success)',parked:'var(--warning)',closed:'var(--mf)',inbox:'var(--mf)'};
+const GO={fix:'Plan the first step',parked:'Park it with a trigger',closed:'Close without doing anything'};
+const ALT={fix:'Fix it now anyway',parked:'Park it instead',closed:'Close it instead'};
+const SUG=[[/nas|backup|drive|cloud|storage/i,['My files have no reliable backup','My storage is scattered across devices']],
+ [/laptop|computer|pc|mac|phone|monitor/i,['My computer slows me down every day']],
+ [/app|tool|software|crm|system|script|dashboard/i,['I keep doing this by hand','Information lives in too many places']],
+ [/hire|freelancer|assistant/i,['I have more work than hours']]];
+const SOL=/^\s*(buy|build|install|set ?up|get|make|switch|migrate|upgrade|add|create|write|order|hire|automate)\b/i;
+const KEY='problem-first-demo-v1';
+const app=document.getElementById('app');
+const $=s=>app.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=d=>new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+const iso=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+const TODAY=iso(new Date());
+
+function seed(){return{n:20,items:[
+ {id:1,title:'The laptop is slow in the morning',added:'5 days ago',status:'inbox',today:'',ideal:'',pct:25,a:{},steps:[]},
+ {id:2,title:'Nobody can find our onboarding notes',added:'last week',status:'inbox',today:'',ideal:'',pct:25,a:{},steps:[]},
+ {id:3,title:'I never know what to cook on weekdays',added:'2 days ago',status:'inbox',today:'',ideal:'',pct:25,a:{},steps:[]},
+ {id:4,title:'My files have no reliable backup',status:'fix',judged:'12 Nov 2026',today:'Photos and documents live on two laptops and one old external drive. Copies happen by hand, when I remember.',ideal:'One place for everything, every device backs up on its own, and a second copy sits outside the house.',pct:25,target:80,a:{pain:2,risk:5,gain:4,cost:3},suggested:'fix',sugWhy:'Doing nothing is risky, it rarely hurts, the fix is a big step up.',why:'One dead drive loses twelve years of photos.',effort:'a weekend',steps:[{t:'Decide what has to be backed up',done:true},{t:'Pick the storage box and drives',done:false},{t:'Set up automatic backup on both laptops',done:false}]},
+ {id:5,title:'Invoices take me half a day every month',status:'fix',judged:'9 Nov 2026',today:'I copy hours from the time tracker into a document by hand, one customer at a time.',ideal:'Invoices are generated from tracked time and I only check and send them.',pct:40,target:90,a:{pain:4,risk:2,gain:4,cost:2},suggested:'fix',sugWhy:'Doing nothing costs little, it hurts often, the fix is a big step up, the fix is cheap.',why:'Six lost days a year, and late invoices delay payment.',effort:'an evening',steps:[{t:'Build one invoice template',done:false},{t:'Fill it from the time tracker export',done:false}]},
+ {id:6,title:'The home network drops in the back room',status:'parked',judged:'18 Oct 2026',today:'One router in the hallway. The back room gets one bar.',ideal:'Stable connection in every room.',pct:50,a:{pain:3,risk:2,gain:3,cost:4},suggested:'parked',sugWhy:'Doing nothing costs little, the fix is expensive.',note:'Big fix for a room used twice a month.',trigger:{type:'date',date:'2026-11-15'},steps:[]},
+ {id:7,title:'The website has no contact form',status:'parked',judged:'2 Nov 2026',today:'People email me from the address in the footer.',ideal:'A form that lands in my inbox with the right details.',pct:30,a:{pain:2,risk:3,gain:3,cost:2},suggested:'parked',sugWhy:'It rarely hurts, the fix is cheap.',note:'Email works. Nobody has complained yet.',trigger:{type:'cond',text:'a second customer asks for one'},steps:[]},
+ {id:8,title:'The car will need new tyres',status:'parked',judged:'5 Nov 2026',today:'Current set has one more season in it.',ideal:'New all-season set.',pct:60,a:{pain:1,risk:4,gain:3,cost:3},suggested:'parked',sugWhy:'Doing nothing is risky, it rarely hurts.',note:'They pass inspection for now.',trigger:{type:'date',date:'2027-03-01'},steps:[]},
+ {id:9,title:'The garage shelving is ugly',status:'closed',judged:'3 Nov 2026',closedOn:'3 Nov 2026',today:'Mismatched shelves that hold everything.',ideal:'Matching shelves.',pct:70,a:{pain:2,risk:1,gain:2,cost:3},suggested:'closed',sugWhy:'Doing nothing costs little, it rarely hurts, the fix changes little.',note:'It holds everything.',steps:[]},
+ {id:10,title:'My notes are spread over two apps',status:'closed',judged:'28 Oct 2026',closedOn:'28 Oct 2026',today:'Work notes in one app, private notes in another.',ideal:'One app.',pct:75,a:{pain:2,risk:1,gain:2,cost:4},suggested:'closed',sugWhy:'Doing nothing costs little, it rarely hurts, the fix changes little, the fix is expensive.',note:'Search finds them in both.',steps:[]}
+]}}
+function load(){try{const r=localStorage.getItem(KEY);if(r)return JSON.parse(r)}catch(e){}return null}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+let S=load()||seed();
+let ui={view:'inbox',cap:'Buy a NAS',keep:false};
+const byId=id=>S.items.find(p=>p.id===+id);
+const list=st=>S.items.filter(p=>p.status===st);
+
+function judge(a,p){
+  if(QS.some(q=>!a[q.id]))return{o:null,why:''};
+  const value=a.pain+a.risk+a.gain,room=(100-p)/100,score=value*(0.5+room/2)-a.cost*1.5;
+  const w=[];
+  if(a.risk>=4)w.push('doing nothing is risky');else if(a.risk<=2)w.push('doing nothing costs little');
+  if(a.pain>=4)w.push('it hurts often');else if(a.pain<=2)w.push('it rarely hurts');
+  if(a.gain>=4)w.push('the fix is a big step up');else if(a.gain<=2)w.push('the fix changes little');
+  if(a.cost>=4)w.push('the fix is expensive');else if(a.cost<=2)w.push('the fix is cheap');
+  if(p>=75)w.push('you are already most of the way there');
+  let t=w.join(', ');t=t?t.charAt(0).toUpperCase()+t.slice(1)+'.':'Nothing stands out in either direction.';
+  return{o:(p>=90||value<=6)?'closed':score>=4.5?'fix':'parked',why:t};
+}
+const cur=p=>{const n=p.steps.length,k=p.steps.filter(s=>s.done).length;return p.status==='fix'&&n?Math.round(p.pct+(p.target-p.pct)*k/n):p.pct};
+const allDone=p=>p.steps.length>0&&p.steps.every(s=>s.done);
+const isDue=p=>p.status==='parked'&&p.trigger&&(p.trigger.fired||(p.trigger.type==='date'&&p.trigger.date<=TODAY));
+const trig=p=>p.trigger.type==='date'?'Revisit on '+fmt(p.trigger.date):'Revisit when '+p.trigger.text;
+
+/* ---------- views ---------- */
+function nav(){const n=list('inbox').length;
+  return `<div class="nav"><button class="tab ${ui.view==='inbox'?'on':''}" data-act="tab" data-v="inbox">Inbox <span class="count">${n}</span></button>
+  <button class="tab ${ui.view==='overview'?'on':''}" data-act="tab" data-v="overview">Overview</button><span class="sp"></span>
+  <button class="link" data-act="reset">Reset demo</button></div>`}
+
+function nudgeHtml(){const v=(ui.cap||'').trim();
+  if(SOL.test(v)&&!ui.keep){const m=SUG.find(s=>s[0].test(v));
+    return `<div class="nudge"><div class="nudge-h">That reads like a solution, not a problem.</div>
+    <div class="muted small">What goes wrong today without it? ${m?'Pick one or rewrite it.':'Rewrite it as what bothers you.'}</div>
+    <div class="pick">${(m?m[1]:[]).map(x=>`<button data-act="sug" data-v="${esc(x)}">${esc(x)}</button>`).join('')}<button class="ghost" data-act="keep">Keep it as written</button></div></div>`}
+  return v.length>=8?'<div class="ok">Good. That is a problem you can judge.</div>':''}
+
+function inboxView(){const it=list('inbox');
+  return `<div class="card"><label class="q" for="in">What's bothering you?</label>
+  <div class="row"><input class="txt" id="in" value="${esc(ui.cap||'')}" placeholder="Describe the problem in one sentence" autocomplete="off"><button class="btn primary" data-act="add">Add problem</button></div>
+  <div id="nudge">${nudgeHtml()}</div></div>
+  <h3>Waiting for a verdict <span class="count">${it.length}</span></h3>
+  <div class="stack">${it.length?it.map(p=>`<div class="card item ${ui.flash===p.id?'flash':''}"><div class="grow"><div class="t">${esc(p.title)}</div><div class="muted small">added ${esc(p.added)}</div></div><button class="link" data-act="del" data-id="${p.id}">Remove</button><button class="btn" data-act="judge" data-id="${p.id}">Judge →</button></div>`).join(''):'<div class="empty">Nothing is waiting. Everything you captured has a verdict.</div>'}</div>
+  <p class="foot">Capturing takes one sentence. Nothing turns into a task until it has a verdict.</p>`}
+
+function barHtml(p,plan){const c=cur(p);return `<div class="bar ${plan?'':'plain'}">${plan?`<div class="plan" style="width:${p.target}%"></div>`:''}<div class="now" style="width:${c}%"></div></div>
+  <div class="barl"><span><b>${c}%</b> of the proper solution today</span>${plan?`<span>these steps take it to <b>${p.target}%</b></span>`:''}</div>`}
+function stepsHtml(p,sep){let nx=false;return `<ul class="steps ${sep?'sep':''}">${p.steps.map((s,i)=>{const n=!s.done&&!nx;if(n)nx=true;return `<li><label><input type="checkbox" data-chk="${p.id}:${i}" ${s.done?'checked':''}><span>${esc(s.t)}</span>${n?'<span class="next">next</span>':''}</label></li>`}).join('')}</ul>`}
+function doneBanner(p){return allDone(p)?`<div class="banner"><span>All steps done. Is it solved now, or only better?</span><button class="btn" data-act="judge" data-id="${p.id}">Judge again</button></div>`:''}
+
+function overviewView(){const f=list('fix'),pk=list('parked'),c=list('closed'),due=pk.filter(isDue),rest=pk.filter(p=>!isDue(p));
+  const fl=p=>ui.flash===p.id?'flash':'';
+  return `<div class="stats"><div class="card stat"><div class="num" style="color:var(--success)">${f.length}</div><div class="lab">worth fixing now</div></div>
+  <div class="card stat"><div class="num" style="color:var(--warning)">${pk.length}</div><div class="lab">parked with a trigger</div></div>
+  <div class="card stat"><div class="num">${c.length}</div><div class="lab">closed as good enough</div></div></div>
+  ${due.length?`<h3><span class="dot" style="background:var(--warning)"></span>Back for a new verdict <span class="count">${due.length}</span></h3><div class="stack">${due.map(p=>`<div class="card item due ${fl(p)}"><div class="grow"><button class="tlink sm" data-act="open" data-id="${p.id}">${esc(p.title)}</button><div class="muted small">${p.trigger.type==='date'?'Parked until '+fmt(p.trigger.date)+'. That date has passed.':'Parked until: '+esc(p.trigger.text)+'. That happened.'}</div></div><button class="btn primary" data-act="judge" data-id="${p.id}">Judge again</button></div>`).join('')}</div>`:''}
+  <h3><span class="dot" style="background:var(--success)"></span>Fix now</h3>
+  <div class="stack">${f.length?f.map(p=>`<div class="card ${fl(p)}"><div class="top"><div><button class="tlink" data-act="open" data-id="${p.id}">${esc(p.title)}</button><div class="why">Why: ${esc(p.why)}</div></div><span class="chip">Effort: ${esc(p.effort)}</span></div>${barHtml(p,true)}${stepsHtml(p,true)}${doneBanner(p)}</div>`).join(''):'<div class="empty">Nothing needs fixing right now.</div>'}</div>
+  <h3><span class="dot" style="background:var(--warning)"></span>Parked</h3>
+  <div class="stack">${rest.length?rest.map(p=>`<div class="card item ${fl(p)}"><div class="grow"><button class="tlink sm" data-act="open" data-id="${p.id}">${esc(p.title)}</button><div class="muted small">${esc(p.note)}</div></div><span class="chip trig">${esc(trig(p))}</span>${p.trigger.type==='cond'?`<button class="link" data-act="fire" data-id="${p.id}">It happened</button>`:''}</div>`).join(''):'<div class="empty">Nothing is parked.</div>'}</div>
+  <h3><span class="dot" style="background:var(--mf)"></span>Good enough <span class="count">${c.length}</span></h3>
+  <div class="stack closed">${c.length?c.map(p=>`<div class="card item ${fl(p)}"><div class="grow"><button class="tlink sm" data-act="open" data-id="${p.id}">${esc(p.title)}</button><div class="muted small">${esc(p.note)} Closed without doing anything.</div></div><span class="chip">Closed ${esc(p.closedOn)}</span></div>`).join(''):'<div class="empty">Nothing closed yet.</div>'}</div>
+  <p class="foot">Steps exist only under a "yes", and each one sits under the reason it is worth doing.</p>`}
+
+function judgeView(){const p=byId(ui.id),d=ui.draft;
+  return `<button class="link back" data-act="back">← Back</button>
+  <div class="head"><div class="lbl">Problem</div><h2>${esc(p.title)}</h2></div>
+  <div class="stack"><div class="two">
+   <label class="card"><span class="k">Today</span><textarea data-f="today" placeholder="What do you have right now? How do you cope?">${esc(d.today)}</textarea></label>
+   <label class="card"><span class="k">Proper solution</span><textarea data-f="ideal" placeholder="What would properly solved look like?">${esc(d.ideal)}</textarea></label></div>
+  <div class="card"><div class="gq"><b>How close is today to the proper solution?</b><span class="read" id="pct">${d.pct}% there</span></div>
+   <input type="range" data-f="pct" min="0" max="100" step="5" value="${d.pct}" aria-label="How close is today to the proper solution"><div class="ends"><span>Nothing in place</span><span>Fully solved</span></div></div>
+  <div class="card">${QS.map(q=>`<div class="qrow"><span class="ql">${q.l}</span><span class="seg"><span class="e">${q.a}</span><span class="bs" role="group" aria-label="${q.l}">${[1,2,3,4,5].map(i=>`<button data-act="ans" data-q="${q.id}" data-v="${i}" class="${d.a[q.id]===i?'on':''}" aria-pressed="${d.a[q.id]===i}">${i}</button>`).join('')}</span><span class="e">${q.b}</span></span></div>`).join('')}</div>
+  <div id="vbox">${vboxHtml()}</div><div id="fbox">${fboxHtml()}</div></div>
+  <p class="foot">The verdict follows your answers, and you can overrule it. Either way the reasoning stays on the card.</p>`}
+
+function vboxHtml(){const d=ui.draft,j=judge(d.a,d.pct);
+  if(!j.o){const n=QS.filter(q=>d.a[q.id]).length;return `<div class="verdict pending"><div><div class="vq">Fix this now?</div><div class="va">Answer the four questions to get a verdict</div></div><span class="read muted">${n} of 4 answered</span></div>`}
+  const others=['fix','parked','closed'].filter(o=>o!==j.o);
+  return `<div class="verdict" style="--v:${COL[j.o]}"><div><div class="vq">Fix this now?</div><div class="va">${VTXT[j.o]}</div><p class="vr small">${esc(j.why)}</p></div>
+  <div class="acts"><button class="btn primary" data-act="choose" data-v="${j.o}">${GO[j.o]}</button>
+  ${ui.overr?others.map(o=>`<button class="btn" data-act="choose" data-v="${o}">${ALT[o]}</button>`).join(''):'<button class="btn" data-act="overr">Overrule the verdict</button>'}</div></div>`}
+
+function fboxHtml(){const d=ui.draft,st=ui.stage;if(!st)return'';
+  const j=judge(d.a,d.pct),ov=j.o&&j.o!==st?`<div class="over">You are overruling the verdict. The answers said "${VTXT[j.o]}". That gets recorded on the card.</div>`:'';
+  const saveRow=(lab,hint)=>`<div class="row end"><span class="muted small" id="hint">${hint}</span><button class="btn primary" id="save" data-act="save">${lab}</button></div>`;
+  if(st==='fix')return `<div class="card follow"><div class="fh">Plan it</div>${ov}
+   <label class="fl">Why is this worth doing?<input class="txt" data-f="why" value="${esc(d.why)}" placeholder="One sentence you will still believe in a month"></label>
+   <div class="fl">First steps</div>
+   <ul class="steps">${d.steps.map((s,i)=>`<li class="ed"><span>${esc(s.t)}</span><button class="x" data-act="rmStep" data-i="${i}" aria-label="Remove step">×</button></li>`).join('')}</ul>
+   <div class="row" style="margin-top:6px"><input class="txt" id="stepIn" placeholder="Add a step and press Enter"><button class="btn" data-act="addStep">Add</button></div>
+   <div class="gq" style="margin-top:16px"><b>Where do these steps get you?</b><span class="read" id="tread">${d.target}% there</span></div>
+   <input type="range" data-f="target" min="${d.pct}" max="100" step="5" value="${d.target}" aria-label="Where do these steps get you">
+   <div class="fl">Effort</div><div class="pick">${EFF.map(e=>`<button data-act="eff" data-v="${e}" class="${d.effort===e?'on':''}">${e}</button>`).join('')}</div>
+   ${saveRow('Save to Fix now','A yes needs at least one step.')}</div>`;
+  if(st==='parked')return `<div class="card follow"><div class="fh">Park it</div>${ov}
+   <label class="fl">Why not now?<input class="txt" data-f="pnote" value="${esc(d.pnote)}" placeholder="${j.o==='parked'?esc(j.why):'What makes waiting acceptable?'}"></label>
+   <div class="fl">What should bring it back?</div>
+   <div class="pick"><button data-act="ttype" data-v="cond" class="${d.ttype==='cond'?'on':''}">When something happens</button><button data-act="ttype" data-v="date" class="${d.ttype==='date'?'on':''}">On a date</button></div>
+   <div class="row inl" style="margin-top:10px">${d.ttype==='cond'?`<span>Revisit when</span><input class="txt" data-f="tcond" value="${esc(d.tcond)}" placeholder="startup takes over 5 minutes">`:`<span>Revisit on</span><input class="txt" type="date" data-f="tdate" value="${esc(d.tdate)}">`}</div>
+   ${saveRow('Park it','Parking needs a trigger, so it comes back by itself.')}</div>`;
+  return `<div class="card follow"><div class="fh">Close it as good enough</div>${ov}
+   <label class="fl">Why is it good enough?<input class="txt" data-f="cnote" value="${esc(d.cnote)}" placeholder="${j.o==='closed'?esc(j.why):'What makes the current state acceptable?'}"></label>
+   ${saveRow('Close without doing anything','')}</div>`}
+
+function canSave(){const d=ui.draft;return ui.stage==='fix'?d.steps.length>0:ui.stage==='parked'?(d.ttype==='date'?!!d.tdate:!!d.tcond.trim()):true}
+function updSave(){const b=$('#save');if(!b)return;const ok=canSave();b.disabled=!ok;const h=$('#hint');if(h)h.hidden=ok}
+function updV(){$('#vbox').innerHTML=vboxHtml()}
+function updF(focus){$('#fbox').innerHTML=fboxHtml();updSave();if(focus){const e=$(focus);if(e)e.focus()}}
+
+function detailView(){const p=byId(ui.id),due=isDue(p);
+  return `<button class="link back" data-act="back">← Back</button>
+  <div class="head"><div class="chips"><span class="chip st" style="--c:${COL[p.status]}">${LAB[p.status]}</span>${p.overruled?'<span class="chip">Verdict overruled</span>':''}${p.judged?`<span class="chip">Judged ${esc(p.judged)}</span>`:''}</div><h2>${esc(p.title)}</h2></div>
+  <div class="stack"><div class="two">
+   <div class="card"><span class="k">Today</span><p>${p.today?esc(p.today):'<span class="muted">Not written down.</span>'}</p></div>
+   <div class="card"><span class="k">Proper solution</span><p>${p.ideal?esc(p.ideal):'<span class="muted">Not written down.</span>'}</p></div></div>
+  <div class="card"><span class="k">Why this verdict</span><div class="ans">${QS.map(q=>`<div><div class="al">${q.s}</div><div class="av"><span class="pips">${[1,2,3,4,5].map(i=>`<i class="${i<=p.a[q.id]?'f':''}"></i>`).join('')}</span>${p.a[q.id]}/5</div></div>`).join('')}</div>
+   ${barHtml(p,p.status==='fix')}
+   <p class="vline">The answers said <b style="color:${COL[p.suggested]}">${VTXT[p.suggested]}</b>. ${esc(p.sugWhy)}${p.overruled?` You overruled that and chose <b>${LAB[p.status]}</b>.`:''}</p></div>
+  ${p.status==='fix'?`<div class="card"><span class="k">Worth it because</span><p>${esc(p.why)}</p><span class="k" style="margin-top:14px">Steps · effort ${esc(p.effort)}</span>${stepsHtml(p)}
+    <div class="row" style="margin-top:10px"><input class="txt" id="dstep" placeholder="Add a step and press Enter"><button class="btn" data-act="dAdd">Add</button></div>${doneBanner(p)}</div>`:''}
+  ${p.status==='parked'?`<div class="card ${due?'due':''}"><span class="k">Parked because</span><p>${esc(p.note)}</p><span class="k" style="margin-top:14px">Comes back</span><div class="row"><span class="chip trig">${esc(trig(p))}</span>${due?'<span class="small" style="color:var(--warning)">Trigger reached.</span>':p.trigger.type==='cond'?`<button class="link" data-act="fire" data-id="${p.id}">It happened</button>`:''}</div></div>`:''}
+  ${p.status==='closed'?`<div class="card"><span class="k">Good enough because</span><p>${esc(p.note)}</p><p class="muted small" style="margin-top:8px">Closed ${esc(p.closedOn)} without doing anything.</p></div>`:''}
+  ${allDone(p)?'':`<div class="row end"><button class="btn ${due?'primary':''}" data-act="judge" data-id="${p.id}">${p.status==='closed'?'Reopen and judge again':'Judge again'}</button></div>`}</div>`}
+
+function render(focus){
+  app.innerHTML=nav()+({inbox:inboxView,overview:overviewView,judge:judgeView,detail:detailView}[ui.view])();
+  if(ui.view==='judge')updSave();
+  ui.flash=null;save();
+  if(focus){const e=$(focus);if(e)e.focus()}
+}
+function mkDraft(p){const c=cur(p);return{today:p.today||'',ideal:p.ideal||'',pct:c,a:{...p.a},why:p.why||'',steps:p.steps.filter(s=>!s.done).map(s=>({...s})),
+  target:Math.max(p.target||0,Math.min(100,c+40)),effort:p.effort||'',pnote:p.status==='parked'?p.note||'':'',cnote:p.status==='closed'?p.note||'':'',ttype:'cond',tcond:'',tdate:''}}
+function startJudge(id){const p=byId(id);ui={view:'judge',id:p.id,draft:mkDraft(p),stage:null,overr:false,back:{view:ui.view==='judge'?'overview':ui.view,id:ui.id},cap:ui.cap};render()}
+function addProblem(){const v=(ui.cap||'').trim();if(!v)return;const id=++S.n;S.items.unshift({id,title:v,added:'just now',status:'inbox',today:'',ideal:'',pct:25,a:{},steps:[]});ui.cap='';ui.keep=false;ui.flash=id;render('#in')}
+function addStep(sel,arr,after){const e=$(sel),v=e&&e.value.trim();if(!v)return;arr.push({t:v,done:false});after()}
+function commit(){const p=byId(ui.id),d=ui.draft,j=judge(d.a,d.pct),st=ui.stage;
+  Object.assign(p,{today:d.today,ideal:d.ideal,pct:d.pct,a:{...d.a},suggested:j.o,sugWhy:j.why,status:st,overruled:j.o!==st,judged:fmt(new Date())});
+  if(st==='fix'){p.why=d.why.trim()||(j.o===st?j.why:'No reason given.');p.steps=d.steps;p.target=Math.max(d.target,d.pct);p.effort=d.effort||EFF[d.a.cost-1];delete p.trigger}
+  else{p.steps=[];p.note=(st==='parked'?d.pnote:d.cnote).trim()||(j.o===st?j.why:'No reason given.');
+    if(st==='parked')p.trigger=d.ttype==='date'?{type:'date',date:d.tdate}:{type:'cond',text:d.tcond.trim()};else{delete p.trigger;p.closedOn=fmt(new Date())}}
+  ui={view:'overview',flash:p.id,cap:ui.cap};render()}
+
+app.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el)return;const a=el.dataset.act,v=el.dataset.v,d=ui.draft;
+  if(a==='tab'){ui={view:v,cap:ui.cap,keep:ui.keep};render()}
+  else if(a==='reset'){S=seed();ui={view:'inbox',cap:'Buy a NAS'};render()}
+  else if(a==='add')addProblem();
+  else if(a==='sug'){ui.cap=v;ui.keep=false;render('#in')}
+  else if(a==='keep'){ui.keep=true;render('#in')}
+  else if(a==='del'){S.items=S.items.filter(p=>p.id!==+el.dataset.id);render()}
+  else if(a==='judge')startJudge(el.dataset.id);
+  else if(a==='open'){ui={view:'detail',id:+el.dataset.id,back:{view:'overview'},cap:ui.cap};render()}
+  else if(a==='back'){const b=ui.back||{view:'overview'};ui={view:b.view,id:b.id,back:{view:'overview'},cap:ui.cap};render()}
+  else if(a==='fire'){byId(el.dataset.id).trigger.fired=true;ui.flash=+el.dataset.id;render()}
+  else if(a==='ans'){d.a[el.dataset.q]=+v;el.parentNode.querySelectorAll('button').forEach(b=>{const on=b===el;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
+    updV();if(ui.stage)updF()}
+  else if(a==='overr'){ui.overr=true;updV()}
+  else if(a==='choose'){ui.stage=v;if(v==='fix'&&!d.effort&&d.a.cost)d.effort=EFF[d.a.cost-1];updF(v==='fix'?'#stepIn':v==='parked'?'[data-f=tcond]':'[data-f=cnote]')}
+  else if(a==='addStep')addStep('#stepIn',d.steps,()=>updF('#stepIn'));
+  else if(a==='rmStep'){d.steps.splice(+el.dataset.i,1);updF('#stepIn')}
+  else if(a==='eff'){d.effort=v;updF()}
+  else if(a==='ttype'){d.ttype=v;updF(v==='cond'?'[data-f=tcond]':'[data-f=tdate]')}
+  else if(a==='save'){if(canSave())commit()}
+  else if(a==='dAdd'){const p=byId(ui.id);addStep('#dstep',p.steps,()=>render('#dstep'))}
+});
+app.addEventListener('input',e=>{const t=e.target;
+  if(t.id==='in'){ui.cap=t.value;ui.keep=false;$('#nudge').innerHTML=nudgeHtml();return}
+  const f=t.dataset.f,d=ui.draft;if(!f||!d)return;
+  d[f]=t.type==='range'?+t.value:t.value;
+  if(f==='pct'){$('#pct').textContent=d.pct+'% there';updV();if(ui.stage==='fix'){if(d.target<d.pct)d.target=d.pct;updF()}}
+  if(f==='target')$('#tread').textContent=d.target+'% there';
+  updSave();
+});
+app.addEventListener('change',e=>{const c=e.target.dataset.chk;if(!c)return;const[id,i]=c.split(':');const s=byId(id).steps[+i];s.done=e.target.checked;render(`[data-chk="${c}"]`)});
+app.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const id=e.target.id;
+  if(id==='in'){e.preventDefault();addProblem()}
+  else if(id==='stepIn'){e.preventDefault();addStep('#stepIn',ui.draft.steps,()=>updF('#stepIn'))}
+  else if(id==='dstep'){e.preventDefault();const p=byId(ui.id);addStep('#dstep',p.steps,()=>render('#dstep'))}
+});
+render();
+</script></body></html>

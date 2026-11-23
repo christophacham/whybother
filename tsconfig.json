@@ -1,0 +1,40 @@
+{
+  // Effect language service rules live in tsconfig.effect.json (same set as t3code).
+  "extends": "./tsconfig.effect.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "ESNext.Disposable", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "useDefineForClassFields": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": ["vite-plus/client"],
+    "paths": {
+      "~/*": ["./src/*"]
+    },
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        // Deep-merged with tsconfig.effect.json. Browser code may use these globals directly.
+        "diagnosticSeverity": {
+          "globalDate": "off",
+          "globalConsole": "off",
+          "globalRandom": "off",
+          "globalTimers": "off",
+          "globalFetch": "off",
+          "cryptoRandomUUID": "off"
+        }
+      }
+    ]
+  },
+  "include": ["src", "e2e", "vite.config.ts", "playwright.config.ts"]
+}
