@@ -94,8 +94,10 @@ NotNow      otherwise
 - **Typecheck:** `effect-tsgo` with t3code's Effect language service rules
   (`tsconfig.effect.json`).
 - **UI:** React 19.3, Tailwind 4.
-- **State:** `@effect/atom-react`. Persisted atoms use `Atom.kvs` over Effect's
-  `KeyValueStore`, backed by `BrowserKeyValueStore.layerLocalStorage`.
+- **State:** `@effect/atom-react`. Persisted atoms read and write Effect's `KeyValueStore`,
+  backed by `BrowserKeyValueStore.layerLocalStorage`. Not `Atom.kvs`: it writes its default
+  when the key is missing and overwrites values it cannot decode. Saves run under a Web Lock
+  shared by all tabs.
 - **Layout:** one package. `src/domain` is pure and has no React or browser imports, so it
   can move into a shared package when the server arrives.
 

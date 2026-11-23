@@ -1,8 +1,7 @@
-import { useAtom } from "@effect/atom-react";
-import * as Option from "effect/Option";
+import { useAtomRefresh, useAtomSet, useAtomValue } from "@effect/atom-react";
 import { useEffect, useState } from "react";
 
-import { STORAGE_KEY, decodeStoredProblems, newProblem, problemsAtom } from "~/state/problems.ts";
+import { STORAGE_KEY, addProblemAtom, problemsAtom, withStorageLock } from "~/state/problems.ts";
 
 interface AppProps {
   /** Set when saved data could not be read at startup and was moved to this key. */
@@ -11,29 +10,41 @@ interface AppProps {
 
 /** Walking skeleton: capture and inbox only. The rest of the flow is in SPEC.md. */
 export function App({ unreadableBackupKey }: AppProps) {
-  const [problems, setProblems] = useAtom(problemsAtom);
+  const problems = useAtomValue(problemsAtom);
+  const addProblem = useAtomSet(addProblemAtom);
+  const reload = useAtomRefresh(problemsAtom);
   const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
   const unjudged = problems.filter((problem) => problem.outcome._tag === "Unjudged");
 
-  // Another tab saved: take its list, so this tab's next save does not overwrite it.
+  // Another tab saved or cleared storage: show what is stored now. Reloading never writes, so
+  // a tab cannot put an older list back.
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
-      if (event.key !== STORAGE_KEY) return;
-      if (event.newValue === null) return setProblems([]);
-      Option.match(decodeStoredProblems(event.newValue), {
-        onNone: () => undefined,
-        onSome: setProblems,
-      });
+      if (event.storageArea !== window.localStorage) return;
+      if (event.key === null || event.key === STORAGE_KEY) reload();
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, [setProblems]);
+  }, [reload]);
 
   const add = () => {
     const title = draft.trim();
-    if (!title) return;
-    setProblems([newProblem(title), ...problems]);
-    setDraft("");
+    if (!title || saving) return;
+    setSaving(true);
+    setSaveFailed(false);
+    // Clear the box only once the problem is saved, so a failed save keeps what was typed.
+    void withStorageLock(() => addProblem(title)).then(
+      () => {
+        setDraft((current) => (current.trim() === title ? "" : current));
+        setSaving(false);
+      },
+      () => {
+        setSaveFailed(true);
+        setSaving(false);
+      },
+    );
   };
 
   return (
@@ -68,11 +79,17 @@ export function App({ unreadableBackupKey }: AppProps) {
           />
           <button
             type="submit"
-            className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-500"
+            disabled={saving}
+            className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-500 disabled:opacity-60"
           >
             Add problem
           </button>
         </div>
+        {saveFailed ? (
+          <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+            Could not save. Your text is still in the box, so you can try again.
+          </p>
+        ) : null}
       </form>
 
       <section className="flex flex-col gap-2">

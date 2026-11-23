@@ -1,4 +1,4 @@
-import { type Page, expect, test } from "@playwright/test";
+import { type BrowserContext, type Page, expect, test } from "@playwright/test";
 
 const KEY = "whybother:problems:v1";
 
@@ -9,6 +9,14 @@ const heading = (page: Page, n: number) => page.getByText(`Waiting for a verdict
 const add = async (page: Page, title: string) => {
   await capture(page).fill(title);
   await capture(page).press("Enter");
+};
+
+/** Opens another tab of the app. `init` runs in it before any page script. */
+const openTab = async (context: BrowserContext, init?: () => void) => {
+  const tab = await context.newPage();
+  if (init) await tab.addInitScript(init);
+  await tab.goto("/");
+  return tab;
 };
 
 const stored = (page: Page) => page.evaluate((key) => window.localStorage.getItem(key), KEY);
@@ -128,6 +136,147 @@ test.describe("storage", () => {
     await add(page, "Added in this tab");
     await other.reload();
     await expect(items(other)).toHaveText(["Added in this tab", "Added in the other tab"]);
+  });
+
+  test("a tab that has not heard about another tab's save still keeps it", async ({
+    page,
+    context,
+  }) => {
+    // This tab never receives storage events, so its list is stale when it saves.
+    const deaf = await openTab(context, () =>
+      window.addEventListener("storage", (event) => event.stopImmediatePropagation(), true),
+    );
+    await expect(capture(deaf)).toBeVisible();
+
+    await add(page, "Saved in the first tab");
+    await expect(items(page)).toHaveText(["Saved in the first tab"]);
+    await add(deaf, "Saved in the stale tab");
+
+    await expect(items(deaf)).toHaveText(["Saved in the stale tab", "Saved in the first tab"]);
+    await page.reload();
+    await expect(items(page)).toHaveText(["Saved in the stale tab", "Saved in the first tab"]);
+  });
+
+  test("a tab that hears about another tab's save does not write it back", async ({
+    page,
+    context,
+  }) => {
+    const listener = await openTab(context, () => {
+      const write = Storage.prototype.setItem;
+      Object.assign(window, { storageWrites: 0 });
+      Storage.prototype.setItem = function (key, value) {
+        Object.assign(window, { storageWrites: Reflect.get(window, "storageWrites") + 1 });
+        write.call(this, key, value);
+      };
+    });
+    await expect(capture(listener)).toBeVisible();
+    const writes = () => listener.evaluate(() => Reflect.get(window, "storageWrites") as number);
+    const before = await writes();
+
+    await add(page, "First save");
+    await add(page, "Second save");
+    await expect(items(listener)).toHaveText(["Second save", "First save"]);
+    await page.evaluate(() => window.localStorage.clear());
+    await expect(items(listener)).toHaveCount(0);
+    expect(await writes()).toBe(before);
+    expect(await stored(page)).toBeNull();
+  });
+
+  test("a save waits for the lock every tab shares", async ({ page, context }) => {
+    const other = await openTab(context);
+    // Hold the lock in the other tab until told to let go.
+    await other.evaluate(
+      (key) =>
+        new Promise<void>((acquired) => {
+          void navigator.locks.request(key, () => {
+            acquired();
+            return new Promise<void>((release) => Object.assign(window, { release }));
+          });
+        }),
+      KEY,
+    );
+
+    await add(page, "Waits for the lock");
+    await page.waitForTimeout(300);
+    expect(await stored(page)).toBeNull();
+
+    await other.evaluate(() => (Reflect.get(window, "release") as () => void)());
+    await expect(items(page)).toHaveText(["Waits for the lock"]);
+    expect(JSON.parse((await stored(page)) ?? "[]")).toHaveLength(1);
+  });
+
+  test("clearing storage in another tab empties this tab too", async ({ page, context }) => {
+    await add(page, "Will be cleared");
+    const other = await openTab(context);
+    await expect(items(other)).toHaveText(["Will be cleared"]);
+
+    await other.evaluate(() => window.localStorage.clear());
+    await expect(items(page)).toHaveCount(0);
+
+    await add(page, "After the clear");
+    await other.reload();
+    await expect(items(other)).toHaveText(["After the clear"]);
+  });
+});
+
+test("a failed save keeps the typed text and says so", async ({ context }) => {
+  const tab = await openTab(context, () => {
+    const write = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      if (Reflect.get(window, "storageFull") === true) {
+        throw new DOMException("Storage is full", "QuotaExceededError");
+      }
+      write.call(this, key, value);
+    };
+  });
+  await expect(capture(tab)).toBeVisible();
+  await tab.evaluate(() => Object.assign(window, { storageFull: true }));
+
+  await add(tab, "Must not be lost");
+  await expect(tab.getByRole("alert")).toContainText("Could not save");
+  await expect(capture(tab)).toHaveValue("Must not be lost");
+  await expect(items(tab)).toHaveCount(0);
+
+  // Once there is room again, the same text saves and the message goes away.
+  await tab.evaluate(() => Object.assign(window, { storageFull: false }));
+  await capture(tab).press("Enter");
+  await expect(items(tab)).toHaveText(["Must not be lost"]);
+  await expect(capture(tab)).toHaveValue("");
+  await expect(tab.getByRole("alert")).toHaveCount(0);
+});
+
+test.describe("when starting could lose data", () => {
+  test("does not start if the browser blocks storage", async ({ context }) => {
+    const tab = await openTab(context, () =>
+      Object.defineProperty(window, "localStorage", {
+        get: () => {
+          throw new DOMException("Storage is disabled", "SecurityError");
+        },
+      }),
+    );
+    await expect(tab.getByRole("alert")).toContainText("does not allow the site to store data");
+    await expect(capture(tab)).toHaveCount(0);
+  });
+
+  test("does not start if unreadable data cannot be backed up", async ({ page, context }) => {
+    const raw = '[{"id":1,"title":"old shape"}]';
+    await page.evaluate(({ key, value }) => window.localStorage.setItem(key, value), {
+      key: KEY,
+      value: raw,
+    });
+    const tab = await openTab(context, () => {
+      const write = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (key, value) {
+        if (key.includes(":unreadable:")) {
+          throw new DOMException("Storage is full", "QuotaExceededError");
+        }
+        write.call(this, key, value);
+      };
+    });
+
+    await expect(tab.getByRole("alert")).toContainText("no room to keep a backup");
+    await expect(capture(tab)).toHaveCount(0);
+    expect(await stored(tab)).toBe(raw);
   });
 });
 
