@@ -29,13 +29,26 @@ const runStore = <A>(
   );
 
 /**
- * Reads the stored list. A missing key is an empty list and is not written, so reading never
- * changes storage. Unreadable values are moved aside by `checkStorage` before the app starts.
+ * Reads the stored list, or nothing if the value cannot be decoded. A missing key is an empty
+ * list and is not written, so reading never changes storage.
  */
-const readProblems = (): ReadonlyArray<Problem> => {
+const readStored = (): Option.Option<ReadonlyArray<Problem>> => {
   const raw = runStore((store) => store.get(STORAGE_KEY));
-  return raw === undefined ? [] : Option.getOrElse(decodeStored(raw), () => []);
+  return raw === undefined ? Option.some([]) : decodeStored(raw);
 };
+
+/**
+ * The list to show. Unreadable values are moved aside by `checkStorage` before the app starts;
+ * one that turns up later shows as an empty list and is left where it is.
+ */
+const readProblems = (): ReadonlyArray<Problem> => Option.getOrElse(readStored(), () => []);
+
+/**
+ * The list to change. An unreadable value throws, so the change fails and nothing is written
+ * over data that could not be read.
+ */
+const readForChange = (): ReadonlyArray<Problem> =>
+  Option.getOrThrowWith(readStored(), () => new Error("Stored problems are unreadable"));
 
 const writeProblems = (problems: ReadonlyArray<Problem>): void =>
   runStore((store) => store.set(STORAGE_KEY, encodeStored(problems)));
@@ -55,20 +68,46 @@ export const problemsAtom = Atom.writable(
 /** Adds to the latest stored list, so a capture another tab saved a moment ago is kept. */
 export const addProblemAtom = Atom.writable(
   () => undefined,
-  (ctx, title: string) => ctx.set(problemsAtom, [newProblem(title), ...readProblems()]),
+  (ctx, title: string) => ctx.set(problemsAtom, [newProblem(title), ...readForChange()]),
 );
 
 /**
- * Runs `f` while holding a lock every tab shares, so two tabs cannot both read the list before
- * either writes. Resolves once `f` has run and rejects if it throws, for example when storage
- * is full. Web Locks need a secure context (HTTPS or localhost); elsewhere `f` runs unlocked.
+ * Removes one unjudged problem from the latest stored list and returns it. Returns undefined
+ * and writes nothing when it is not there, for example because another tab removed it first,
+ * so only the tab that really removed a problem can offer to put it back. Call under
+ * `withStorageLock`, then refresh `problemsAtom`.
  */
-export const withStorageLock = (f: () => void): Promise<void> =>
+export const removeStored = (id: string): Problem | undefined => {
+  const stored = readForChange();
+  const found = stored.find((problem) => problem.id === id && problem.outcome._tag === "Unjudged");
+  if (found) writeProblems(stored.filter((problem) => problem !== found));
+  return found;
+};
+
+/**
+ * Puts a removed problem back into the latest stored list, keeping it newest first. Writes
+ * nothing if the id is stored already. Call under `withStorageLock`, then refresh
+ * `problemsAtom`.
+ */
+export const restoreStored = (problem: Problem): void => {
+  const stored = readForChange();
+  if (stored.some((other) => other.id === problem.id)) return;
+  const older = stored.findIndex((other) => other.createdAt < problem.createdAt);
+  const at = older === -1 ? stored.length : older;
+  writeProblems([...stored.slice(0, at), problem, ...stored.slice(at)]);
+};
+
+/**
+ * Runs `f` while holding a lock every tab shares, so two tabs cannot both read the list before
+ * either writes. Resolves with what `f` returns and rejects if it throws, for example when
+ * storage is full. Web Locks need a secure context (HTTPS or localhost); elsewhere `f` runs
+ * unlocked.
+ */
+export const withStorageLock = <A>(f: () => A): Promise<A> =>
   "locks" in navigator
     ? navigator.locks.request(STORAGE_KEY, f)
     : new Promise((resolve) => {
-        f();
-        resolve();
+        resolve(f());
       });
 
 /** What the startup check found. */
@@ -100,9 +139,13 @@ export const checkStorage: Effect.Effect<StorageCheck> = Effect.gen(function* ()
     Effect.orElseSucceed(() => false),
   );
   if (!copied) return blocked("backup-failed");
-  // The copy is safe now. If removing the original fails, the next save replaces it anyway.
-  yield* Effect.ignore(store.remove(STORAGE_KEY));
-  return ready(backupKey);
+  // The copy is safe now. Changes refuse to write over a value they cannot read, so an
+  // original that cannot be removed would block every save: then the app must not start.
+  const cleared = yield* store.remove(STORAGE_KEY).pipe(
+    Effect.as(true),
+    Effect.orElseSucceed(() => false),
+  );
+  return cleared ? ready(backupKey) : blocked("unavailable");
 }).pipe(
   Effect.provide(BrowserKeyValueStore.layerLocalStorage),
   // Blocked storage throws while the layer is built, which is a defect, not a failure.

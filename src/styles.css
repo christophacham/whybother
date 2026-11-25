@@ -2,12 +2,141 @@
 
 @theme {
   --font-sans: ui-sans-serif, system-ui, sans-serif;
-}
+  --font-display: var(--font-sans);
 
-:root {
-  color-scheme: light dark;
+  /* What every design is drawn with. These values are Tidy's; the others follow below. */
+  --color-bg: #0c0c0e;
+  --color-surface: #17171b;
+  --color-fg: #ededf0;
+  --color-muted: #9c9ca6;
+  --color-line: #62626c;
+  --color-accent: #4f7cff;
+  --color-on-accent: #fff;
+  --radius-box: 12px;
 }
 
 body {
-  @apply bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
+  @apply bg-bg text-fg antialiased;
+}
+
+/* A row that has just appeared: added, put back, or saved in another tab. */
+@utility land {
+  animation: land 0.3s ease-out;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+@keyframes land {
+  from {
+    opacity: 0;
+    translate: 0 -6px;
+  }
+}
+
+/* One block per design in the trial. See src/ui/designs/index.ts for how the trial ends. */
+[data-design="tidy"] {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --color-bg: #0c0c0e;
+  --color-surface: #17171b;
+  --color-fg: #ededf0;
+  --color-muted: #9c9ca6;
+  --color-line: #62626c;
+  --color-accent: #4f7cff;
+  --color-on-accent: #fff;
+  --radius-box: 12px;
+}
+[data-design="composer"] {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --color-bg: #111214;
+  --color-surface: #1d1f24;
+  --color-fg: #f2f2f3;
+  --color-muted: #a2a4ab;
+  --color-line: #5f626b;
+  --color-accent: #f5b83d;
+  --color-on-accent: #1a1300;
+  --radius-box: 20px;
+}
+[data-design="editorial"] {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces Variable", "Iowan Old Style", Georgia, serif;
+  --color-bg: #15120e;
+  --color-surface: #1e1a15;
+  --color-fg: #efe7da;
+  --color-muted: #a89e8e;
+  --color-line: #948a7a;
+  --color-accent: #e8846c;
+  --color-on-accent: #15120e;
+  --radius-box: 0;
+}
+[data-design="docket"] {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+  --color-bg: #101010;
+  --color-surface: #171716;
+  --color-fg: #e9e6de;
+  --color-muted: #9d9a91;
+  --color-line: #77746c;
+  --color-accent: #ff6a45;
+  --color-on-accent: #160500;
+  --radius-box: 2px;
+}
+[data-design="workbench"] {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --color-bg: #0f1115;
+  --color-surface: #181b21;
+  --color-fg: #e9ecf1;
+  --color-muted: #8f97a6;
+  --color-line: #5d6573;
+  --color-accent: #3ecf8e;
+  --color-on-accent: #04170e;
+}
+[data-design="open-question"] {
+  --color-bg: #151a20;
+  --color-surface: #1c232b;
+  --color-fg: #f0f3f6;
+  --color-muted: #9eabb8;
+  --color-line: #64727f;
+  --color-accent: #f2cf7a;
+  --color-on-accent: #1d1704;
+  --radius-box: 8px;
+}
+[data-design="two-rooms"] {
+  --color-bg: #111716;
+  --color-surface: #1d4b44;
+  --color-fg: #edf6f3;
+  --color-muted: #9db1ab;
+  --color-line: #5c716b;
+  --color-accent: #bfe9d8;
+  --color-on-accent: #0d2d27;
+  --radius-box: 10px;
+}
+[data-design="top-of-pile"] {
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --color-bg: #271d2e;
+  --color-surface: #3a2c43;
+  --color-fg: #f6eef4;
+  --color-muted: #c2b2c9;
+  --color-line: #8a7593;
+  --color-accent: #f0b7c9;
+  --color-on-accent: #36122a;
+  --radius-box: 16px;
+}
+[data-design="sorting-board"] {
+  --color-bg: #17181d;
+  --color-surface: #292b34;
+  --color-fg: #f0f1f5;
+  --color-muted: #a9adb9;
+  --color-line: #6b7080;
+  --color-accent: #b0bcff;
+  --color-on-accent: #151a3a;
+}
+[data-design="one-list"] {
+  --color-bg: #101b27;
+  --color-surface: #1b2c3d;
+  --color-fg: #eaf1f7;
+  --color-muted: #9bb0c3;
+  --color-line: #5b738a;
+  --color-accent: #ffab94;
+  --color-on-accent: #3a1208;
+  --radius-box: 8px;
 }

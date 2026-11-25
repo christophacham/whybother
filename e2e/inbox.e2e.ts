@@ -3,12 +3,21 @@ import { type BrowserContext, type Page, expect, test } from "@playwright/test";
 const KEY = "whybother:problems:v1";
 
 const capture = (page: Page) => page.getByLabel("What's bothering you?");
-const items = (page: Page) => page.getByRole("listitem");
-const heading = (page: Page, n: number) => page.getByText(`Waiting for a verdict (${n})`);
+/** The titles, in order. A row also holds an age and buttons, so the row's text is more. */
+const items = (page: Page) => page.getByRole("listitem").getByTestId("title");
+const heading = (page: Page, n: number) =>
+  page.getByRole("region", { name: `Waiting for a verdict (${n})` });
 
-const add = async (page: Page, title: string) => {
+/** Types an entry and presses Enter, without waiting to see what comes of it. */
+const submit = async (page: Page, title: string) => {
   await capture(page).fill(title);
   await capture(page).press("Enter");
+};
+
+/** Adds a problem and waits for the save: the box clears only once it is stored. */
+const add = async (page: Page, title: string) => {
+  await submit(page, title);
+  await expect(capture(page)).toHaveValue("");
 };
 
 /** Opens another tab of the app. `init` runs in it before any page script. */
@@ -31,7 +40,6 @@ test.beforeEach(async ({ page }) => {
 test.describe("capture", () => {
   test("starts with an empty inbox", async ({ page }) => {
     await expect(heading(page, 0)).toBeVisible();
-    await expect(page.getByText("Nothing is waiting.")).toBeVisible();
     await expect(items(page)).toHaveCount(0);
   });
 
@@ -55,9 +63,18 @@ test.describe("capture", () => {
     await expect(heading(page, 2)).toBeVisible();
   });
 
+  test("keeps spaces inside a title and turns line breaks into single spaces", async ({ page }) => {
+    await capture(page).fill('Replace "a  b" with "a b"\n  everywhere');
+    await capture(page).press("Enter");
+
+    await expect(items(page)).toHaveCount(1);
+    const saved = JSON.parse((await stored(page)) ?? "[]");
+    expect(saved[0].title).toBe('Replace "a  b" with "a b" everywhere');
+  });
+
   test("ignores an empty or blank entry", async ({ page }) => {
-    await page.getByRole("button", { name: "Add problem" }).click();
-    await add(page, "     ");
+    await expect(page.getByRole("button", { name: "Add problem" })).toBeDisabled();
+    await submit(page, "     ");
 
     await expect(items(page)).toHaveCount(0);
     expect(JSON.parse((await stored(page)) ?? "[]")).toEqual([]);
@@ -196,7 +213,7 @@ test.describe("storage", () => {
       KEY,
     );
 
-    await add(page, "Waits for the lock");
+    await submit(page, "Waits for the lock");
     await page.waitForTimeout(300);
     expect(await stored(page)).toBeNull();
 
@@ -232,7 +249,7 @@ test("a failed save keeps the typed text and says so", async ({ context }) => {
   await expect(capture(tab)).toBeVisible();
   await tab.evaluate(() => Object.assign(window, { storageFull: true }));
 
-  await add(tab, "Must not be lost");
+  await submit(tab, "Must not be lost");
   await expect(tab.getByRole("alert")).toContainText("Could not save");
   await expect(capture(tab)).toHaveValue("Must not be lost");
   await expect(items(tab)).toHaveCount(0);
