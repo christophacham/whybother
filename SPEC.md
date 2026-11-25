@@ -110,6 +110,9 @@ src/ui       React components
 ### Storage rules
 
 - One key, `whybother:problems:v1`, holding the array of problems.
+- The design trial also keeps the chosen design under `whybother:design`. That is a preference,
+  not data: losing it changes nothing but the look, and it goes when the trial ends
+  (`src/ui/designs/index.ts`).
 - A change to the schema that old data cannot decode needs a new key version and a migration
   from the previous one. Never drop stored data silently.
 
